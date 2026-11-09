@@ -29,6 +29,10 @@ public class AccountService {
         return accountRepository.findByName(name);
     }
 
+    public List<Account> getAccountsByClientIdAndName(Integer clientId, String name) {
+        return accountRepository.findByClientIdAndName(clientId, name);
+    }
+
     public Account createAccount(Account account) {
         return accountRepository.save(account);
     }
@@ -51,6 +55,15 @@ public class AccountService {
         throw new RuntimeException("Compte introuvable avec l'id " + id);
     }
 
+    public Optional<Account> updateNameForClient(Integer id, Integer clientId, String name) {
+        return accountRepository.findById(id)
+                .filter(account -> account.getClientId().equals(clientId))
+                .map(account -> {
+                    account.setName(name);
+                    return accountRepository.save(account);
+                });
+    }
+
     public void deleteAccount(Integer id) {
         if (accountRepository.existsById(id)) {
             accountRepository.deleteById(id);
@@ -59,4 +72,3 @@ public class AccountService {
         }
     }
 }
-

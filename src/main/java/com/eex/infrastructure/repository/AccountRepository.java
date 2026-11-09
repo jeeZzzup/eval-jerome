@@ -10,5 +10,5 @@ import java.util.List;
 public interface AccountRepository extends JpaRepository<Account, Integer> {
     List<Account> findByClientId(Integer clientId);
     List<Account> findByName(String name);
+    List<Account> findByClientIdAndName(Integer clientId, String name);
 }
-

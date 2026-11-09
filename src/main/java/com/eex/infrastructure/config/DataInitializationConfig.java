@@ -24,7 +24,6 @@ public class DataInitializationConfig {
                 createTables();
                 insertData();
                 System.out.println("La base de données a été initialisée");
-                displayData();
             } catch (Exception e) {
                 System.err.println("Erreur lors de l'initialisation SQLite : " + e.getMessage());
                 e.printStackTrace();
@@ -97,58 +96,4 @@ public class DataInitializationConfig {
         }
     }
 
-    public static void displayData() {
-        try (var conn = DriverManager.getConnection(sqlite_url);
-             var stmt = conn.createStatement();
-             var rsUser = stmt.executeQuery("SELECT * FROM user")) {
-
-            System.out.println("\nTable User");
-            System.out.println("id\tclient_id\tusername\tpassword");
-            System.out.println("------------------------------------");
-            while (rsUser.next()) {
-                System.out.println(rsUser.getInt("id") + "\t" +
-                        rsUser.getInt("client_id") + "\t\t\t" +
-                        rsUser.getString("username") + "\t\t" +
-                        rsUser.getString("password")
-                );
-            }
-        } catch (SQLException e) {
-            System.err.println(e.getMessage());
-        }
-
-        try (var conn = DriverManager.getConnection(sqlite_url);
-             var stmt = conn.createStatement();
-             var rsClient = stmt.executeQuery("SELECT * FROM client")) {
-
-            System.out.println("\nTable Client");
-            System.out.println("id\tlegal_entity");
-            System.out.println("----------------");
-            while (rsClient.next()) {
-                System.out.println(rsClient.getInt("id") + "\t" +
-                        rsClient.getBoolean("legal_entity")
-                );
-            }
-        } catch (SQLException e) {
-            System.err.println(e.getMessage());
-        }
-
-        try (var conn = DriverManager.getConnection(sqlite_url);
-             var stmt = conn.createStatement();
-             var rsAccount = stmt.executeQuery("SELECT * FROM account")) {
-
-            System.out.println("\nTable Account");
-            System.out.println("id\tclient_id\tname\tamount");
-            System.out.println("------------------------------");
-            while (rsAccount.next()) {
-                System.out.println(rsAccount.getInt("id") + "\t" +
-                        rsAccount.getInt("client_id") + "\t\t\t" +
-                        rsAccount.getString("name") + "\t" +
-                        rsAccount.getDouble("amount")
-                );
-            }
-        } catch (SQLException e) {
-            System.err.println(e.getMessage());
-        }
-    }
 }
-

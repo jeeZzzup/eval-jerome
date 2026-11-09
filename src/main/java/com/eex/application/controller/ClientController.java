@@ -2,13 +2,16 @@ package com.eex.application.controller;
 
 import com.eex.domain.entity.Client;
 import com.eex.domain.service.ClientService;
+import com.eex.infrastructure.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/clients")
@@ -17,42 +20,30 @@ public class ClientController {
     private final ClientService clientService;
 
     @GetMapping
-    public ResponseEntity<List<Client>> getAllClients() {
-        List<Client> clients = clientService.getAllClients();
-        return new ResponseEntity<>(clients, HttpStatus.OK);
+    public ResponseEntity<List<Client>> getClient(
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        return clientService.getClientById(authenticatedUser.clientId())
+                .map(client -> ResponseEntity.ok(List.of(client)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<Client> getMyClient(
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        return clientService.getClientById(authenticatedUser.clientId())
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Client> getClientById(@PathVariable Integer id) {
-        Optional<Client> client = clientService.getClientById(id);
-        return client.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
-    }
-
-    @PostMapping
-    public ResponseEntity<Client> createClient(@RequestBody Client client) {
-        Client createdClient = clientService.createClient(client);
-        return new ResponseEntity<>(createdClient, HttpStatus.CREATED);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Client> updateClient(@PathVariable Integer id, @RequestBody Client clientDetails) {
-        try {
-            Client updatedClient = clientService.updateClient(id, clientDetails);
-            return new ResponseEntity<>(updatedClient, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    public ResponseEntity<Client> getClientById(
+            @PathVariable Integer id,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        if (!id.equals(authenticatedUser.clientId())) {
+            return ResponseEntity.notFound().build();
         }
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteClient(@PathVariable Integer id) {
-        try {
-            clientService.deleteClient(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        return clientService.getClientById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }
-

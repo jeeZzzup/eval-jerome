@@ -1,14 +1,18 @@
 package com.eex.application.controller;
 
-import com.eex.domain.entity.User;
+import com.eex.application.dto.UserResponse;
 import com.eex.domain.service.UserService;
+import com.eex.infrastructure.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
@@ -17,53 +21,40 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.getAllUsers();
-        return new ResponseEntity<>(users, HttpStatus.OK);
+    public ResponseEntity<List<UserResponse>> getUsersForClient(
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        return ResponseEntity.ok(userService.getUsersByClientId(authenticatedUser.clientId())
+                .stream().map(UserResponse::from).toList());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Integer id) {
-        Optional<User> user = userService.getUserById(id);
-        return user.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<UserResponse> getUserById(
+            @PathVariable Integer id,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        return userService.getUserById(id)
+                .filter(user -> user.getClientId().equals(authenticatedUser.clientId()))
+                .map(UserResponse::from)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/client/{clientId}")
-    public ResponseEntity<List<User>> getUsersByClientId(@PathVariable Integer clientId) {
-        List<User> users = userService.getUsersByClientId(clientId);
-        return new ResponseEntity<>(users, HttpStatus.OK);
+    public ResponseEntity<List<UserResponse>> getUsersByClientId(
+            @PathVariable Integer clientId,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        if (!clientId.equals(authenticatedUser.clientId())) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(userService.getUsersByClientId(clientId)
+                .stream().map(UserResponse::from).toList());
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<User>> getUsersByUsername(@RequestParam String username) {
-        List<User> users = userService.getUsersByUsername(username);
-        return new ResponseEntity<>(users, HttpStatus.OK);
-    }
-
-    @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-        User createdUser = userService.createUser(user);
-        return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Integer id, @RequestBody User userDetails) {
-        try {
-            User updatedUser = userService.updateUser(id, userDetails);
-            return new ResponseEntity<>(updatedUser, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Integer id) {
-        try {
-            userService.deleteUser(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<List<UserResponse>> getUsersByUsername(
+            @RequestParam String username,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        return ResponseEntity.ok(userService.getUsersByClientIdAndUsername(
+                        authenticatedUser.clientId(), username)
+                .stream().map(UserResponse::from).toList());
     }
 }

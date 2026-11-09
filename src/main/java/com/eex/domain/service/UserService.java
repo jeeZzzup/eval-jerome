@@ -29,6 +29,10 @@ public class UserService {
         return userRepository.findByUsername(username);
     }
 
+    public List<User> getUsersByClientIdAndUsername(Integer clientId, String username) {
+        return userRepository.findByClientIdAndUsername(clientId, username);
+    }
+
     public User createUser(User user) {
         return userRepository.save(user);
     }

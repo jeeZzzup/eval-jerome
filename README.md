@@ -17,3 +17,5 @@ Le projet inclut une base "sqlite.test.db" qui s'initialise au lancement de l'ap
 * http://localhost:8080/api/users/* → gestion d'utilisateurs (attributs : id, username, password, clientId)
 * http://localhost:8080/api/accounts/* → gestion de comptes (attributs : id, name, amount, clientId)
 * http://localhost:8080/api/clients/* → gestion de clients (attributs : id, legalEntity)
+
+## ##
